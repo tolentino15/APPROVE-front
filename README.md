@@ -1,61 +1,124 @@
-# .
+# 📌 APPROVE – Regras do Projeto
 
-This template should help get you started developing with Vue 3 in Vite.
+## 🆔 Padrão de IDs
+**Formato:** `<ÁREA>-<TELA>.<TASK>`  
+- ÁREA: FRONT | BACK | DB | OPS  
+- TELA: número da tela/fluxo (do protótipo)  
+- TASK: sequência da tarefa naquela tela  
 
-## Recommended IDE Setup
+Exemplos: `FRONT-50.01`, `BACK-50.01`, `DB-50.01`.
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+---
 
-## Type Support for `.vue` Imports in TS
+## 📋 Trello
+**Listas:** `Backlog` → `A Fazer` → `Em andamento` → `PR` → `Concluído`  
+**Labels:** `FRONT`, `BACK`, `DB`, `OPS`, `BUG`  
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+**Template de card:**
+```md
+ID: FRONT-50.01
+User Story: Como usuário, quero acessar a tela de login para autenticar e usar o sistema.
+Critérios de Aceite:
+- [ ] Exibir campos email/senha
+- [ ] Validar formato de email
+- [ ] Botão Entrar só habilita se válido
+Notas: link do protótipo
+Impacto: front ✅ | back ⬜ | db ⬜
+Link PR: ...
+````
 
-## Customize configuration
+---
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+## 🌿 Fluxo de Git
 
-## Project Setup
+**Regras principais:**
 
-```sh
-npm install
+* 1 branch por card.
+* PR rascunho no mesmo dia.
+* Commits pequenos.
+* Sempre rebase (`git rebase origin/main`) para atualizar.
+* Merge somente com **squash**.
+
+**Branches:**
+
+```text
+feat/FRONT-50.01-login-ui
+fix/BACK-21.02-refresh-401
+chore/OPS-00.01-ci-pipeline
 ```
 
-### Compile and Hot-Reload for Development
+**Commits:**
 
-```sh
-npm run dev
+```text
+feat(front): FRONT-50.01 layout base da tela de login
+fix(front): FRONT-50.01 validação de email
+refactor(db): DB-10.01 renomeia coluna status
 ```
 
-### Type-Check, Compile and Minify for Production
+**Exemplo:**
 
-```sh
-npm run build
+```bash
+# Atualizar main
+git checkout main && git pull --ff-only origin main
+
+# Criar branch
+git checkout -b feat/FRONT-50.01-login-ui
+
+# Commit
+git add frontend/src/pages/Login.vue
+git commit -m "feat(front): FRONT-50.01 layout base da tela de login"
+
+# Publicar
+git push -u origin feat/FRONT-50.01-login-ui
+
+# Rebase
+git fetch origin && git rebase origin/main && git push --force-with-lease
+
+# Merge squash (mensagem final)
+# feat(front): FRONT-50.01 tela de login (UI + validação)
 ```
 
-### Run Unit Tests with [Vitest](https://vitest.dev/)
+---
 
-```sh
-npm run test:unit
+## 📑 Pull Requests
+
+**Template:**
+
+```md
+### ID
+FRONT-50.01
+
+### O que foi feito
+- ...
+
+### Como testar
+- ...
+
+### Impacto
+front ⬜ | back ⬜ | db ⬜
+
+### Links
+Card Trello: ...
+Protótipo: ...
 ```
 
-### Run End-to-End Tests with [Cypress](https://www.cypress.io/)
+---
 
-```sh
-npm run test:e2e:dev
-```
+## 👥 Responsáveis por Áreas
 
-This runs the end-to-end tests against the Vite development server.
-It is much faster than the production build.
+| Pasta              | Responsáveis             |
+| ------------------ | ------------------------ |
+| `/frontend/*`      | @dev-front1, @dev-front2 |
+| `/backend/*`       | @dev-back1, @dev-back2   |
+| `/db/migrations/*` | @dev-db1, @dev-db2       |
 
-But it's still recommended to test the production build with `test:e2e` before deploying (e.g. in CI environments):
+---
 
-```sh
-npm run build
-npm run test:e2e
-```
+## ✅ Regras de Merge e CI
 
-### Lint with [ESLint](https://eslint.org/)
+* `main` protegida (sem push direto).
+* **Squash merge only**.
+* 1 reviewer obrigatório.
+* Branch deve estar atualizada antes do merge.
 
-```sh
-npm run lint
 ```
