@@ -1,19 +1,15 @@
 <template>
   <v-app>
-    <!-- APP BAR -->
-    <v-app-bar height="56" flat color="#2a2a2a" density="comfortable" class="text-white">
+    <!-- Topbar: Barra superior fixa com logo e avatar do usuário -->
+    <v-app-bar height="80" flat color="#2a2a2a" density="comfortable" class="text-white">
+      <!-- Logo da empresa, carregada da pasta public -->
       <template #prepend>
         <div class="d-flex align-center">
-          <v-icon size="26" class="mr-1">mdi-checkbox-marked-circle-outline</v-icon>
-          <span class="font-weight-bold mr-1">Approv</span>
-          <span class="text-green-accent-4 font-weight-black">v</span>
+          <v-img src="/Logo.png" alt="Logo" width="180" height="44" contain eager class="mr-2" />
         </div>
       </template>
-
       <v-spacer />
-
-      <v-spacer />
-
+      <!-- Avatar e nome do usuário -->
       <div class="d-flex align-center mr-2">
         <v-avatar size="32" class="mr-2">
           <v-img :src="avatarUrl" alt="avatar" />
@@ -23,52 +19,57 @@
       </div>
     </v-app-bar>
 
+    <!-- Sidebar: Navegação lateral com ícones e páginas -->
+    <v-navigation-drawer
+      v-model="drawer"
+      permanent
+      rail
+      expand-on-hover
+      color="#262626"
+      class="elevation-0"
+    >
+      <!-- Ícone do menu no topo da sidebar -->
+      <template #prepend>
+        <div class="d-flex flex-column align-center py-4">
+          <v-icon size="32" color="white">mdi-menu</v-icon>
+        </div>
+      </template>
+      <v-divider class="my-2"></v-divider>
+      <!-- Lista de páginas do sistema -->
+      <v-list density="compact" nav>
+        <v-list-item
+          prepend-icon="mdi-view-dashboard-outline"
+          title="Dashboard"
+          :active="true"
+          style="background: #00c896; color: #111; font-weight: bold; border-radius: 8px"
+          @click="goToDashboard"
+        />
+        <v-list-item
+          prepend-icon="mdi-clipboard-text-outline"
+          title="Jobs"
+          @click="goToBoardAdmin"
+        />
+        <v-list-item
+          prepend-icon="mdi-calendar-month"
+          title="Calendário"
+          @click="goToCalendarAdmin"
+        />
+        <v-list-item
+          prepend-icon="mdi-account-outline"
+          title="Clientes"
+          @click="goToCadastroCliente"
+        />
+      </v-list>
+    </v-navigation-drawer>
     <v-main>
       <v-container fluid class="pa-5 bg-outer">
-        <v-navigation-drawer
-          expand-on-hover
-          permanent
-          rail
-          color="#262626"
-          class="elevation-0"
-          v-model="drawer"
-        >
-          <template #prepend>
-            <div class="d-flex flex-column align-center py-4">
-              <v-icon size="32" color="white">mdi-menu</v-icon>
-            </div>
-          </template>
-          <v-divider class="my-2"></v-divider>
-          <v-list density="compact" nav>
-            <v-list-item
-              prepend-icon="mdi-view-dashboard-outline"
-              title="Dashboard"
-              :active="true"
-              style="background: #00c896; color: #111; font-weight: bold; border-radius: 8px"
-              @click="goToDashboard"
-            />
-            <v-list-item
-              prepend-icon="mdi-clipboard-text-outline"
-              title="Jobs"
-              @click="goToBoardAdmin"
-            />
-            <v-list-item
-              prepend-icon="mdi-calendar-month"
-              title="Calendário"
-              @click="goToCalendarAdmin"
-            />
-            <v-list-item
-              prepend-icon="mdi-account-outline"
-              title="Clientes"
-              @click="goToCadastroCliente"
-            />
-          </v-list>
-        </v-navigation-drawer>
-
         <v-row>
           <v-col cols="12">
             <!-- CTA TOP -->
-            <div class="d-flex justify-end">
+            <div class="d-flex align-center justify-space-between mb-2" style="min-height: 56px">
+              <div class="text-h5 font-weight-black" style="color: #222">
+                Seja Bem-Vindo(a), Júlia.
+              </div>
               <v-btn
                 color="primary"
                 prepend-icon="mdi-plus"
@@ -96,78 +97,84 @@
             </v-row>
 
             <!-- BIG ACTIONS -->
-            <v-row class="mt-2" dense>
-              <v-col cols="12" md="4">
-                <v-btn
-                  block
-                  color="primary"
-                  height="56"
-                  class="text-none font-weight-black rounded-lg elevation-1"
-                  @click="goToCalendarAdmin"
-                >
-                  CALENDÁRIO
-                </v-btn>
-              </v-col>
-              <v-col cols="12" md="4">
-                <v-btn
-                  block
-                  color="primary"
-                  height="56"
-                  class="text-none font-weight-black rounded-lg elevation-1"
-                  @click="goToBoardAdmin"
-                >
-                  QUADRO
-                </v-btn>
-              </v-col>
-              <v-col cols="12" md="4">
-                <v-btn
-                  block
-                  color="primary"
-                  height="56"
-                  class="text-none font-weight-black rounded-lg elevation-1"
-                >
-                  CONFIGURAÇÕES
-                </v-btn>
-              </v-col>
-            </v-row>
+            <div
+              class="d-flex justify-center align-center"
+              style="gap: 32px; margin-top: 40px; margin-bottom: 40px"
+            >
+              <v-btn
+                color="primary"
+                height="64"
+                style="flex: 1; min-width: 140px; font-size: 1.15rem; padding: 0 32px"
+                class="text-none font-weight-black rounded-lg elevation-1 mx-1"
+                @click="goToCalendarAdmin"
+                >CALENDÁRIO</v-btn
+              >
+              <v-btn
+                color="primary"
+                height="64"
+                style="flex: 1; min-width: 140px; font-size: 1.15rem; padding: 0 32px"
+                class="text-none font-weight-black rounded-lg elevation-1 mx-1"
+                @click="goToBoardAdmin"
+                >QUADRO</v-btn
+              >
+              <v-btn
+                color="primary"
+                height="64"
+                style="flex: 1; min-width: 140px; font-size: 1.15rem; padding: 0 32px"
+                class="text-none font-weight-black rounded-lg elevation-1 mx-1"
+              >
+                CONFIGURAÇÕES
+              </v-btn>
+            </div>
 
             <!-- CLIENTES -->
-            <v-card class="mt-4 rounded-xl elevation-1">
-              <v-card-text class="pb-1">
+            <v-card
+              class="mt-4 rounded-xl elevation-1"
+              style="display: flex; flex-direction: column"
+            >
+              <v-card-text class="pb-1" style="padding-bottom: 8px">
                 <div class="d-flex align-center justify-space-between">
                   <div class="text-h6 font-weight-black">Clientes</div>
-
-                  <div class="d-flex align-center">
-                    <v-text-field
-                      class="clients-search mr-3"
-                      variant="solo"
-                      flat
-                      hide-details
-                      density="comfortable"
-                      prepend-inner-icon="mdi-magnify"
-                      placeholder="Buscar"
-                    />
+                  <div class="d-flex align-center" style="gap: 12px">
                     <v-btn
                       color="primary"
                       prepend-icon="mdi-plus"
                       class="text-none font-weight-bold rounded-lg"
+                      style="height: 40px"
                       size="small"
                       @click="goToCadastroCliente"
+                      >Criar novo Cliente</v-btn
                     >
-                      Criar novo Cliente
-                    </v-btn>
+                    <v-text-field
+                      v-model="search"
+                      class="clients-search"
+                      density="compact"
+                      label="Buscar"
+                      prepend-inner-icon="mdi-magnify"
+                      variant="solo-filled"
+                      flat
+                      hide-details
+                      single-line
+                      style="
+                        height: 40px;
+                        min-width: 320px;
+                        max-width: 100%;
+                        border-radius: 8px;
+                        background: #fff;
+                        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+                      "
+                    />
                   </div>
                 </div>
               </v-card-text>
 
-              <v-divider class="mx-4"></v-divider>
+              <v-divider class="mx-4" style="margin-top: 0; margin-bottom: 8px"></v-divider>
 
-              <!-- Grade de clientes (usa v-row, mas com look de grid) -->
-              <v-card-text>
+              <v-card-text style="flex: 1; overflow-y: auto">
                 <div class="clients-grid">
                   <v-sheet
-                    v-for="(c, i) in clients"
-                    :key="i"
+                    v-for="cliente in filteredClients"
+                    :key="cliente.id"
                     class="client-card rounded-lg elevation-1 d-flex flex-column align-center pa-3"
                     color="#fafafa"
                   >
@@ -178,7 +185,7 @@
                       <v-icon size="38">mdi-fuel</v-icon>
                     </v-sheet>
                     <div class="text-caption text-medium-emphasis mt-2 font-weight-semibold">
-                      {{ c }}
+                      {{ cliente.nome }}
                     </div>
                   </v-sheet>
                 </div>
@@ -192,12 +199,38 @@
 </template>
 
 <script setup lang="ts">
-function goToDashboard() {
-  router.push({ name: 'HomeAdmin' })
-}
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
+const drawer = ref(true)
+const search = ref('')
+const avatarUrl = 'https://avatars.githubusercontent.com/u/9919?s=64&v=4'
+
+const kpis = [
+  { title: 'Jobs Pendentes', value: 30, icon: 'mdi-clock-time-four-outline' },
+  { title: 'Pedidos de Revisão', value: 10, icon: 'mdi-pencil-outline' },
+  { title: 'Jobs Aprovados', value: 300, icon: 'mdi-check-decagram-outline' },
+  { title: 'Total Realizados', value: 500, icon: 'mdi-chart-areaspline' },
+]
+
+// Escopo futuro: clientes como objetos
+const clients = ref([
+  { id: 1, nome: 'Posto Shell' },
+  { id: 2, nome: 'Posto Ipiranga' },
+  { id: 3, nome: 'Posto BR' },
+  // ...outros clientes
+])
+
+// Filtro de busca por nome
+const filteredClients = computed(() => {
+  if (!search.value) return clients.value
+  return clients.value.filter((c) => c.nome.toLowerCase().includes(search.value.toLowerCase()))
+})
+
+function goToDashboard() {
+  router.push({ name: 'HomeAdmin' })
+}
 function goToCadastroCliente() {
   router.push({ name: 'CadastroCliente' })
 }
@@ -210,24 +243,12 @@ function goToCalendarAdmin() {
 function goToBoardAdmin() {
   router.push({ name: 'BoardAdmin' })
 }
-
-import { ref } from 'vue'
-const drawer = ref(true)
-
-const kpis = [
-  { title: 'Jobs Pendentes', value: 30, icon: 'mdi-clock-time-four-outline' },
-  { title: 'Pedidos de Revisão', value: 10, icon: 'mdi-pencil-outline' },
-  { title: 'Jobs Aprovados', value: 300, icon: 'mdi-check-decagram-outline' },
-  { title: 'Total Realizados', value: 500, icon: 'mdi-chart-areaspline' },
-]
-
-const clients = Array.from({ length: 24 }, () => 'Posto Shell')
-
-const avatarUrl = 'https://avatars.githubusercontent.com/u/9919?s=64&v=4' // placeholder
 </script>
 
 <style scoped>
-/* fundos principais (ficam fiéis ao mock) */
+.v-application {
+  background: #d4d4d4 !important;
+}
 .bg-outer {
   background: #d4d4d4;
   min-height: calc(100vh - 56px);
@@ -236,15 +257,11 @@ const avatarUrl = 'https://avatars.githubusercontent.com/u/9919?s=64&v=4' // pla
   background: #d4d4d4;
   box-shadow: none;
 }
-
-/* busca redonda igual ao mock */
 .top-search :deep(.v-field--variant-solo) {
   border-radius: 9999px;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
   max-width: 420px;
 }
-
-/* KPI */
 .kpi-card .kpi-icon {
   width: 36px;
   height: 36px;
@@ -255,37 +272,28 @@ const avatarUrl = 'https://avatars.githubusercontent.com/u/9919?s=64&v=4' // pla
   align-items: center;
   justify-content: center;
 }
-
-/* Clientes */
 .clients-search :deep(.v-field--variant-solo) {
   border-radius: 9999px;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
   width: 360px;
   max-width: 360px;
 }
-
-/* grid de clientes: 8 colunas no desktop, com gap semelhante ao design */
 .clients-grid {
   display: grid;
   grid-template-columns: repeat(8, 1fr);
   gap: 18px 22px;
 }
-
 .logo-chip {
   width: 56px;
   height: 56px;
   display: grid;
   place-items: center;
 }
-
-/* cartões de cliente com leve borda interna + sombra */
 .client-card {
   box-shadow:
     inset 0 0 0 1px rgba(0, 0, 0, 0.03),
     0 4px 14px rgba(0, 0, 0, 0.08);
 }
-
-/* responsividade */
 @media (max-width: 1400px) {
   .clients-grid {
     grid-template-columns: repeat(6, 1fr);
