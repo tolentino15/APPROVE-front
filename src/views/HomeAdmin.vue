@@ -15,7 +15,6 @@
           <v-img :src="avatarUrl" alt="avatar" />
         </v-avatar>
         <span class="font-weight-semibold mr-1">Júlia Mosso</span>
-        <v-icon size="18">mdi-chevron-down</v-icon>
       </div>
     </v-app-bar>
     h
@@ -171,12 +170,12 @@
 
               <v-divider class="mx-4" style="margin-top: 0; margin-bottom: 8px"></v-divider>
 
-              <v-card-text style="flex: 1; overflow-y: auto">
-                <div class="clients-grid">
+              <v-card-text style="flex: 1">
+                <div class="clients-grid clients-grid-scroll">
                   <v-sheet
                     v-for="cliente in filteredClients"
                     :key="cliente.id"
-                    class="client-card rounded-lg elevation-1 d-flex flex-column align-center pa-3"
+                    class="client-card rounded-lg elevation-5 d-flex flex-column align-center pa-3"
                     color="#fafafa"
                     role="button"
                     @click="openClient(cliente)"
@@ -304,7 +303,19 @@ const clients = ref([
   { id: 1, nome: 'Posto Shell' },
   { id: 2, nome: 'Posto Ipiranga' },
   { id: 3, nome: 'Posto BR' },
-  // ...outros clientes
+  { id: 4, nome: 'Posto Petrobras' },
+  { id: 5, nome: 'Posto Texaco' },
+  { id: 6, nome: 'Posto Esso' },
+  { id: 7, nome: 'Posto Mobil' },
+  { id: 8, nome: 'Posto Ale' },
+  { id: 9, nome: 'Posto Shell' },
+  { id: 10, nome: 'Posto Ipiranga' },
+  { id: 11, nome: 'Posto BR' },
+  { id: 12, nome: 'Posto Petrobras' },
+  { id: 13, nome: 'Posto Texaco' },
+  { id: 14, nome: 'Posto Esso' },
+  { id: 15, nome: 'Posto Mobil' },
+  { id: 16, nome: 'Posto Ale' },
 ])
 
 // Filtro de busca por nome
@@ -360,6 +371,11 @@ function openClient(cliente: { id: number; nome: string }) {
 </script>
 
 <style scoped>
+.clients-grid-scroll {
+  max-height: 350px;
+  overflow-y: auto;
+  padding: 18px 24px;
+}
 .v-application {
   background: #d4d4d4 !important;
 }
@@ -431,7 +447,7 @@ function openClient(cliente: { id: number; nome: string }) {
 .progress-split {
   display: flex;
   width: 100%;
-  height: 10px;
+  height: 24px;
   border-radius: 6px;
   overflow: hidden;
   background: #eee;
@@ -450,13 +466,16 @@ function openClient(cliente: { id: number; nome: string }) {
 }
 .progress-split .pending {
   background: #d9d9d9;
-  color: #666;
+  color: #111;
 }
 .progress-split span {
-  font-size: 10px;
-  line-height: 1;
-  position: absolute;
-  top: -16px;
+  font-size: 12px;
+  line-height: 24px;
+  position: static;
+  top: auto;
+  left: auto;
+  width: 100%;
+  text-align: center;
 }
 
 /* Card cinza do job */
