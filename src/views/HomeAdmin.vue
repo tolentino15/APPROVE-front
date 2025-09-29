@@ -18,7 +18,7 @@
         <v-icon size="18">mdi-chevron-down</v-icon>
       </div>
     </v-app-bar>
-
+    h
     <!-- Sidebar: Navegação lateral com ícones e páginas -->
     <v-navigation-drawer
       v-model="drawer"
@@ -61,6 +61,7 @@
         />
       </v-list>
     </v-navigation-drawer>
+    <!-- Main Content: Conteúdo principal da página -->
     <v-main>
       <v-container fluid class="pa-5 bg-outer">
         <v-row>
@@ -74,7 +75,7 @@
                 color="primary"
                 prepend-icon="mdi-plus"
                 class="text-none font-weight-bold rounded-lg"
-                size="small"
+                style="height: 40px"
                 @click="goToCadastroJob"
               >
                 Criar novo Job
@@ -262,8 +263,12 @@ function goToBoardAdmin() {
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
   max-width: 420px;
 }
+.kpi-card {
+  max-width: 300px;
+  margin: 0 auto;
+}
 .kpi-card .kpi-icon {
-  width: 36px;
+  width: 30px;
   height: 36px;
   border-radius: 10px;
   background: #eaf2ff;
