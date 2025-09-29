@@ -178,6 +178,8 @@
                     :key="cliente.id"
                     class="client-card rounded-lg elevation-1 d-flex flex-column align-center pa-3"
                     color="#fafafa"
+                    role="button"
+                    @click="openClient(cliente)"
                   >
                     <v-sheet
                       class="logo-chip rounded-lg elevation-1 d-grid place-center"
@@ -195,6 +197,88 @@
           </v-col>
         </v-row>
       </v-container>
+
+      <!-- ============== DIALOG: Detalhes do Cliente ============== -->
+      <v-dialog v-model="clientDialog" max-width="920" scrollable>
+        <v-card class="rounded-xl">
+          <v-card-title class="d-flex align-center justify-space-between">
+            <span class="text-h5 font-weight-black">{{ selectedClient?.nome || 'Cliente' }}</span>
+            <v-btn icon="mdi-close" variant="text" @click="clientDialog = false" />
+          </v-card-title>
+
+          <v-divider />
+
+          <v-card-text class="py-6">
+            <v-row>
+              <!-- Coluna ESQUERDA: Avatar / CTA / Redes -->
+              <v-col cols="12" md="5" class="pr-md-6">
+                <div class="d-flex flex-column align-center">
+                  <v-img
+                    :src="selectedClient?.avatar || placeholderAvatar"
+                    alt="avatar"
+                    width="260"
+                    height="220"
+                    cover
+                    class="rounded-lg elevation-1 mb-4"
+                  />
+                  <v-btn
+                    color="primary"
+                    class="text-none font-weight-bold rounded-lg mb-4"
+                    size="large"
+                    block
+                  >
+                    Calendário
+                  </v-btn>
+                  <div class="d-flex align-center ga-4">
+                    <v-btn icon variant="outlined"><v-icon>mdi-instagram</v-icon></v-btn>
+                    <v-btn icon variant="outlined"><v-icon>mdi-facebook</v-icon></v-btn>
+                    <v-btn icon variant="outlined"><v-icon>mdi-twitter</v-icon></v-btn>
+                  </div>
+                </div>
+              </v-col>
+
+              <!-- Coluna DIREITA: Jobs -->
+              <v-col cols="12" md="7">
+                <div class="text-h5 font-weight-black mb-2">Jobs</div>
+
+                <!-- Barra de progresso dividida -->
+                <div class="mb-4">
+                  <div class="text-subtitle-2 text-medium-emphasis mb-1">Progresso</div>
+                  <div class="progress-split">
+                    <div class="approved" :style="{ width: approvedPct + '%' }">
+                      <span>Aprovados</span>
+                    </div>
+                    <div class="pending" :style="{ width: 100 - approvedPct + '%' }">
+                      <span>Em Andamento</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Lista de jobs (mock) -->
+                <v-row dense>
+                  <v-col v-for="(job, idx) in selectedClientJobs" :key="idx" cols="12">
+                    <v-card class="rounded-lg elevation-1 job-card">
+                      <v-card-text>
+                        <div class="text-subtitle-1 font-weight-bold mb-1">Title</div>
+                        <div class="text-body-2 text-medium-emphasis">
+                          Subtitle Subtitle Subtitle Subtitle
+                        </div>
+                        <div class="d-flex mt-3">
+                          <div class="status-pill" :class="{ green: job.status === 'approved' }">
+                            <span v-if="job.status === 'approved'">Aprovado!</span>
+                            <span v-else>Em Andamento</span>
+                          </div>
+                        </div>
+                      </v-card-text>
+                    </v-card>
+                  </v-col>
+                </v-row>
+              </v-col>
+            </v-row>
+          </v-card-text>
+        </v-card>
+      </v-dialog>
+      <!-- ============ /DIALOG: Detalhes do Cliente ============== -->
     </v-main>
   </v-app>
 </template>
@@ -243,6 +327,35 @@ function goToCalendarAdmin() {
 }
 function goToBoardAdmin() {
   router.push({ name: 'BoardAdmin' })
+}
+
+// ---------- Dialog & seleção do cliente ----------
+const clientDialog = ref(false)
+const selectedClient = ref<{ id: number; nome: string; avatar?: string } | null>(null)
+
+// Jobs mockados do cliente selecionado
+const selectedClientJobs = ref<Array<{ status: 'approved' | 'pending' }>>([])
+
+// Avatar placeholder (enquanto não vem do backend)
+const placeholderAvatar =
+  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=800&auto=format&fit=crop'
+
+// Percentual de aprovados para a barra dividida
+const approvedPct = ref<number>(65)
+
+// Abrir dialog ao clicar no cliente
+function openClient(cliente: { id: number; nome: string }) {
+  selectedClient.value = { ...cliente, avatar: placeholderAvatar }
+
+  // Mock de jobs
+  selectedClientJobs.value = [{ status: 'approved' }, { status: 'approved' }, { status: 'pending' }]
+
+  // Recalcula % aprovados
+  const total = selectedClientJobs.value.length
+  const ok = selectedClientJobs.value.filter((j) => j.status === 'approved').length
+  approvedPct.value = total ? Math.round((ok / total) * 100) : 0
+
+  clientDialog.value = true
 }
 </script>
 
@@ -312,5 +425,59 @@ function goToBoardAdmin() {
     width: 100%;
     max-width: 100%;
   }
+}
+
+/* Barra de progresso dividida */
+.progress-split {
+  display: flex;
+  width: 100%;
+  height: 10px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #eee;
+  position: relative;
+}
+.progress-split > div {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  position: relative;
+}
+.progress-split .approved {
+  background: #2f7cf6;
+  color: #fff;
+}
+.progress-split .pending {
+  background: #d9d9d9;
+  color: #666;
+}
+.progress-split span {
+  font-size: 10px;
+  line-height: 1;
+  position: absolute;
+  top: -16px;
+}
+
+/* Card cinza do job */
+.job-card {
+  background: #e9e9e9;
+}
+
+/* Pílula de status */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #a3a3a3;
+  color: #fff;
+  border-radius: 9999px;
+  height: 18px;
+  padding: 0 10px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.status-pill.green {
+  background: #21c55d;
 }
 </style>
