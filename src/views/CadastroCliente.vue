@@ -178,6 +178,8 @@
                         color="primary"
                         class="text-none font-weight-bold rounded-lg btn-cadastrar"
                         style="height: 36px"
+                        :loading="saving"
+                        :disabled="saving"
                       >
                         Cadastrar Cliente
                       </v-btn>
@@ -201,6 +203,20 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 const drawer = ref(true)
 const avatarUrl = 'https://avatars.githubusercontent.com/u/9919?s=64&v=4'
+const saving = ref(false)
+
+/** Mock de criação de cliente (trocar por chamada ao backend depois) */
+function createClientMock(payload: {
+  nome: string
+  email: string
+  senha: string
+  descricao: string
+  logo: File | null
+}) {
+  // Simula um retorno do backend
+  const id = Date.now()
+  return Promise.resolve({ id, ...payload })
+}
 
 const form = ref({
   nome: '',
@@ -266,13 +282,22 @@ function goToCadastroCliente() {
 /* Submit com validação do v-form */
 async function submit() {
   const res = await formRef.value?.validate()
-  if (!res?.valid) {
-    // Se algum campo inválido, o Vuetify já exibe as mensagens (hide-details="auto")
-    return
+  if (!res?.valid) return
+
+  saving.value = true
+  try {
+    const payload = { ...form.value }
+    // TODO: trocar por chamada real (ex.: await api.post('/clientes', payload))
+    const novoCliente = await createClientMock(payload)
+
+    // Redireciona para o Dashboard após criar
+    await router.push({ name: 'HomeAdmin', query: { createdClientId: String(novoCliente.id) } })
+  } catch (err) {
+    console.error('Erro ao criar cliente:', err)
+    // aqui você pode mostrar um snackbar/toast de erro
+  } finally {
+    saving.value = false
   }
-  // OK para enviar
-  console.log('Payload de cadastro (válido):', { ...form.value })
-  // Depois: chamar API e tratar retorno/erros
 }
 </script>
 
