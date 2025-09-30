@@ -17,7 +17,7 @@
         <span class="font-weight-semibold mr-1">Júlia Mosso</span>
       </div>
     </v-app-bar>
-    h
+
     <!-- Sidebar: Navegação lateral com ícones e páginas -->
     <v-navigation-drawer
       v-model="drawer"
@@ -151,7 +151,7 @@
                       density="compact"
                       label="Buscar"
                       prepend-inner-icon="mdi-magnify"
-                      variant="solo-filled"
+                      variant="outlined"
                       flat
                       hide-details
                       single-line
