@@ -1,65 +1,5 @@
 <template>
   <v-app>
-    <!-- Topbar: Barra superior fixa com logo e avatar do usuário -->
-    <v-app-bar height="80" flat color="#2a2a2a" density="comfortable" class="text-white">
-      <!-- Logo da empresa, carregada da pasta public -->
-      <template #prepend>
-        <div class="d-flex align-center">
-          <v-img src="/Logo.png" alt="Logo" width="180" height="44" contain eager class="mr-2" />
-        </div>
-      </template>
-      <v-spacer />
-      <!-- Avatar e nome do usuário -->
-      <div class="d-flex align-center mr-2">
-        <v-avatar size="32" class="mr-2">
-          <v-img :src="avatarUrl" alt="avatar" />
-        </v-avatar>
-        <span class="font-weight-semibold mr-1">Júlia Mosso</span>
-      </div>
-    </v-app-bar>
-
-    <!-- Sidebar: Navegação lateral com ícones e páginas -->
-    <v-navigation-drawer
-      v-model="drawer"
-      permanent
-      rail
-      expand-on-hover
-      color="#262626"
-      class="elevation-0"
-    >
-      <!-- Ícone do menu no topo da sidebar -->
-      <template #prepend>
-        <div class="d-flex flex-column align-center py-4">
-          <v-icon size="32" color="white">mdi-menu</v-icon>
-        </div>
-      </template>
-      <v-divider class="my-2"></v-divider>
-      <!-- Lista de páginas do sistema -->
-      <v-list density="compact" nav>
-        <v-list-item
-          prepend-icon="mdi-view-dashboard-outline"
-          title="Dashboard"
-          :active="true"
-          style="background: #00c896; color: #111; font-weight: bold; border-radius: 8px"
-          @click="goToDashboard"
-        />
-        <v-list-item
-          prepend-icon="mdi-clipboard-text-outline"
-          title="Jobs"
-          @click="goToBoardAdmin"
-        />
-        <v-list-item
-          prepend-icon="mdi-calendar-month"
-          title="Calendário"
-          @click="goToCalendarAdmin"
-        />
-        <v-list-item
-          prepend-icon="mdi-account-outline"
-          title="Clientes"
-          @click="goToCadastroCliente"
-        />
-      </v-list>
-    </v-navigation-drawer>
     <!-- Main Content: Conteúdo principal da página -->
     <v-main>
       <v-container fluid class="pa-5 bg-outer">
@@ -287,9 +227,8 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
-const drawer = ref(true)
+
 const search = ref('')
-const avatarUrl = 'https://avatars.githubusercontent.com/u/9919?s=64&v=4'
 
 const kpis = [
   { title: 'Jobs Pendentes', value: 30, icon: 'mdi-clock-time-four-outline' },
@@ -324,9 +263,6 @@ const filteredClients = computed(() => {
   return clients.value.filter((c) => c.nome.toLowerCase().includes(search.value.toLowerCase()))
 })
 
-function goToDashboard() {
-  router.push({ name: 'HomeAdmin' })
-}
 function goToCadastroCliente() {
   router.push({ name: 'CadastroCliente' })
 }

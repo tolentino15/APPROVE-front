@@ -1,62 +1,5 @@
 <template>
   <v-app>
-    <!-- APP BAR (igual aos demais) -->
-    <v-app-bar height="80" flat color="#2a2a2a" density="comfortable" class="text-white">
-      <template #prepend>
-        <div class="d-flex align-center">
-          <v-img src="/Logo.png" alt="Logo" width="180" height="44" contain eager class="mr-2" />
-        </div>
-      </template>
-      <v-spacer />
-      <div class="d-flex align-center mr-2">
-        <v-avatar size="32" class="mr-2">
-          <v-img :src="avatarUrl" alt="avatar" />
-        </v-avatar>
-        <span class="font-weight-semibold mr-1">Júlia Mosso</span>
-      </div>
-    </v-app-bar>
-
-    <!-- NAV DRAWER (igual aos demais) -->
-    <v-navigation-drawer
-      v-model="drawer"
-      permanent
-      rail
-      expand-on-hover
-      color="#262626"
-      class="elevation-0"
-    >
-      <template #prepend>
-        <div class="d-flex flex-column align-center py-4">
-          <v-icon size="32" color="white">mdi-menu</v-icon>
-        </div>
-      </template>
-      <v-divider class="my-2"></v-divider>
-      <v-list density="compact" nav>
-        <v-list-item
-          prepend-icon="mdi-view-dashboard-outline"
-          title="Dashboard"
-          :active="false"
-          style="background: #00c896; color: #111; font-weight: bold; border-radius: 8px"
-          @click="goToDashboard"
-        />
-        <v-list-item
-          prepend-icon="mdi-clipboard-text-outline"
-          title="Jobs"
-          @click="goToBoardAdmin"
-        />
-        <v-list-item
-          prepend-icon="mdi-calendar-month"
-          title="Calendário"
-          @click="goToCalendarAdmin"
-        />
-        <v-list-item
-          prepend-icon="mdi-account-outline"
-          title="Clientes"
-          @click="goToCadastroCliente"
-        />
-      </v-list>
-    </v-navigation-drawer>
-
     <!-- MAIN -->
     <v-main>
       <v-container fluid class="pa-0">
@@ -147,8 +90,6 @@ import { useRouter } from 'vue-router'
 
 /* Estado geral */
 const router = useRouter()
-const drawer = ref(true)
-const avatarUrl = 'https://avatars.githubusercontent.com/u/9919?s=64&v=4'
 
 /* Tipos */
 type ColumnKey = 'draft' | 'waiting' | 'fixing' | 'approved'
@@ -218,18 +159,6 @@ function onColumnDrop(targetColId: ColumnKey) {
 }
 
 /* Navegação (mesmo padrão) */
-function goToDashboard() {
-  router.push({ name: 'HomeAdmin' })
-}
-function goToBoardAdmin() {
-  router.push({ name: 'BoardAdmin' })
-}
-function goToCalendarAdmin() {
-  router.push({ name: 'CalendarAdmin' })
-}
-function goToCadastroCliente() {
-  router.push({ name: 'CadastroCliente' })
-}
 function goToCadastroJob() {
   router.push({ name: 'CadastroJob' })
 }
