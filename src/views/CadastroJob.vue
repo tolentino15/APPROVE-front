@@ -101,7 +101,7 @@
 
                       <!-- Linha com Cliente, Data e Redes -->
                       <v-row class="mt-1" dense>
-                        <v-col cols="12" md="4">
+                        <v-col cols="6" md="2">
                           <div class="label">Cliente</div>
                           <v-select
                             v-model="form.clienteId"
@@ -118,7 +118,7 @@
                           />
                         </v-col>
 
-                        <v-col cols="12" md="4">
+                        <v-col cols="6" md="2">
                           <div class="label">Data de Publicação</div>
                           <v-text-field
                             v-model="form.dataPublicacao"
@@ -134,7 +134,7 @@
                         </v-col>
 
                         <!-- Redes sociais selecionáveis -->
-                        <v-col cols="12" md="4">
+                        <v-col cols="6" md="3">
                           <div class="label">Redes Sociais</div>
                           <v-btn-toggle
                             v-model="form.redes"
@@ -169,13 +169,6 @@
                               :aria-pressed="form.redes.includes('whatsapp')"
                             >
                               <v-icon size="32">mdi-whatsapp</v-icon>
-                            </v-btn>
-                            <v-btn
-                              value="tiktok"
-                              icon
-                              :aria-pressed="form.redes.includes('tiktok')"
-                            >
-                              <v-icon size="32">mdi-tiktok</v-icon>
                             </v-btn>
                           </v-btn-toggle>
                         </v-col>
