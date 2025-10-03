@@ -10,64 +10,67 @@
             prepend-icon="mdi-plus"
             class="text-none font-weight-bold rounded-lg"
             style="height: 36px"
+            @click="goToCadastroJob"
           >
             Criar novo Job
           </v-btn>
         </div>
 
-        <!-- BOARD -->
-        <div class="board-grid">
-          <div
-            v-for="col in columns"
-            :key="col.id"
-            class="board-column"
-            :class="['col-' + col.id, { 'is-over': dragOverColumnId === col.id }]"
-            @dragover.prevent="onColumnDragOver(col.id)"
-            @dragleave="onColumnDragLeave(col.id)"
-            @drop="onColumnDrop(col.id)"
-          >
-            <!-- Cabeçalho da coluna -->
-            <div class="column-header d-flex align-center justify-space-between">
-              <div class="text-subtitle-2 font-weight-bold">{{ col.title }}</div>
-              <v-btn size="28" icon variant="text"
-                ><v-icon size="18">mdi-dots-horizontal</v-icon></v-btn
-              >
-            </div>
+        <!-- BOARD: altura fixa + colunas com scroll interno -->
+        <div class="board-viewport">
+          <div class="board-grid">
+            <div
+              v-for="col in columns"
+              :key="col.id"
+              class="board-column"
+              :class="['col-' + col.id, { 'is-over': dragOverColumnId === col.id }]"
+              @dragover.prevent="onColumnDragOver(col.id)"
+              @dragleave="onColumnDragLeave(col.id)"
+              @drop="onColumnDrop(col.id)"
+            >
+              <!-- Cabeçalho da coluna -->
+              <div class="column-header d-flex align-center justify-space-between">
+                <div class="text-subtitle-2 font-weight-bold">{{ col.title }}</div>
+                <v-btn size="28" icon variant="text">
+                  <v-icon size="18">mdi-dots-horizontal</v-icon>
+                </v-btn>
+              </div>
 
-            <!-- Cards -->
-            <div class="column-cards">
-              <v-card
-                v-for="card in col.cards"
-                :key="card.id"
-                class="kanban-card rounded-lg elevation-1"
-                draggable="true"
-                @dragstart="onCardDragStart(card, col.id)"
-                @dragend="onCardDragEnd"
-                @click.stop="openCard(card)"
-                style="cursor: pointer"
-              >
-                <v-img
-                  v-if="card.image"
-                  :src="card.image"
-                  alt=""
-                  height="84"
-                  cover
-                  class="rounded-lg mb-2"
-                />
-                <v-card-text class="py-3">
-                  <div class="text-subtitle-2 font-weight-bold mb-1">{{ card.title }}</div>
-                  <div class="text-caption text-medium-emphasis">
-                    {{ card.subtitle }}
-                  </div>
-                  <div class="d-flex align-center justify-end mt-2">
-                    <v-icon size="16" class="text-medium-emphasis">mdi-message-bulleted</v-icon>
-                  </div>
-                </v-card-text>
-              </v-card>
+              <!-- Cards (com scroll interno quando passar da altura) -->
+              <div class="column-cards">
+                <v-card
+                  v-for="(card, idx) in col.cards"
+                  :key="`${col.id}-${card.id}-${idx}`"
+                  class="kanban-card rounded-lg elevation-3"
+                  draggable="true"
+                  @dragstart="onCardDragStart(card, col.id)"
+                  @dragend="onCardDragEnd"
+                  @click.stop="openCard(card)"
+                  style="cursor: pointer"
+                >
+                  <v-img
+                    v-if="card.image"
+                    :src="card.image"
+                    alt=""
+                    height="84"
+                    cover
+                    class="rounded-lg mb-2"
+                  />
+                  <v-card-text class="py-3">
+                    <div class="text-subtitle-2 font-weight-bold mb-1">{{ card.title }}</div>
+                    <div class="text-caption text-medium-emphasis">
+                      {{ card.subtitle }}
+                    </div>
+                    <div class="d-flex align-center justify-end mt-2">
+                      <v-icon size="16" class="text-medium-emphasis">mdi-message-bulleted</v-icon>
+                    </div>
+                  </v-card-text>
+                </v-card>
 
-              <!-- Placeholder quando coluna vazia -->
-              <div v-if="col.cards.length === 0" class="empty-hint text-medium-emphasis">
-                Arraste cards aqui
+                <!-- Placeholder quando coluna vazia -->
+                <div v-if="col.cards.length === 0" class="empty-hint text-medium-emphasis">
+                  Arraste os cards aqui
+                </div>
               </div>
             </div>
           </div>
@@ -229,6 +232,12 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+const router = useRouter()
+
+function goToCadastroJob() {
+  router.push({ name: 'CadastroJob' })
+}
 
 /* Tipos */
 type ColumnKey = 'draft' | 'waiting' | 'adjust' | 'approved'
@@ -260,7 +269,7 @@ interface CardDetails {
   comments: CommentItem[]
 }
 
-/* Dados do board */
+/* Dados do board (pode repetir id de card para testar — key usa idx) */
 const columns = ref<Column[]>([
   {
     id: 'draft',
@@ -273,6 +282,15 @@ const columns = ref<Column[]>([
         image:
           'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=800&auto=format&fit=crop',
       },
+      { id: '2', title: 'Title', subtitle: 'Subtitle Subtitle Subtitle' },
+      { id: '2', title: 'Title', subtitle: 'Subtitle Subtitle Subtitle' },
+      { id: '2', title: 'Title', subtitle: 'Subtitle Subtitle Subtitle' },
+      { id: '2', title: 'Title', subtitle: 'Subtitle Subtitle Subtitle' },
+      { id: '2', title: 'Title', subtitle: 'Subtitle Subtitle Subtitle' },
+      { id: '2', title: 'Title', subtitle: 'Subtitle Subtitle Subtitle' },
+      { id: '2', title: 'Title', subtitle: 'Subtitle Subtitle Subtitle' },
+      { id: '2', title: 'Title', subtitle: 'Subtitle Subtitle Subtitle' },
+      { id: '2', title: 'Title', subtitle: 'Subtitle Subtitle Subtitle' },
       { id: '2', title: 'Title', subtitle: 'Subtitle Subtitle Subtitle' },
     ],
   },
@@ -400,9 +418,19 @@ function saveDetails() {
 /* superfície clara como antes */
 .page-surface {
   background: #d9d9d9;
-  min-height: calc(100vh - 80px);
+  /* altura total visível menos a app-bar */
+  height: calc(100vh - 80px);
   padding-top: 24px;
-  padding-bottom: 32px;
+  padding-bottom: 24px;
+}
+
+/* Faz o container interno virar uma coluna flex:
+   - header em cima
+   - board-viewport ocupando o restante da altura */
+.page-surface > .v-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Título chip azul (mock) */
@@ -418,47 +446,59 @@ function saveDetails() {
   background: #2f7cf6;
 }
 
-/* GRID do board */
-.board-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(240px, 1fr));
-  gap: 18px;
+/* VIEWPORT do board ocupa todo o espaço restante
+   (sem calc frágil) e evita scroll externo */
+.board-viewport {
+  height: calc(100% - 56px); /* 56px ~ altura do cabeçalho (título+botão). Ajuste se mudar */
+  overflow: hidden; /* o scroll fica nas colunas */
 }
 
-/* Colunas com bordas coloridas (como estava antes) */
+/* GRID do board */
+.board-grid {
+  height: 100%;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(250px, 1fr));
+  gap: 18px;
+}
+/* Colunas com bordas coloridas */
 .board-column {
-  background: #e0e0e0;
-  border: 1px solid rgba(0, 0, 0, 0.25);
+  background: #d6d6d6;
+  border: 2px solid rgba(0, 0, 0, 0.25);
   border-radius: 10px;
   padding: 8px 10px 12px;
-  min-height: 420px;
   display: flex;
   flex-direction: column;
+  min-height: 0; /* importante para o overflow do filho funcionar */
 }
 .board-column.is-over {
   outline: 2px dashed rgba(47, 124, 246, 0.55);
   outline-offset: -4px;
 }
 .col-draft {
-  border-color: #e27b7b;
-} /* vermelho suave */
+  border-color: #666666;
+}
 .col-waiting {
-  border-color: #6dcc7e;
-} /* verde suave */
+  border-color: #d40000;
+}
 .col-adjust {
-  border-color: #8b8b8b;
-} /* cinza */
+  border-color: #d68b00;
+}
 .col-approved {
-  border-color: #8b8b8b;
-} /* cinza */
+  border-color: #07d100;
+}
 
 /* Header da coluna */
 .column-header {
+  flex: 0 0 auto;
   padding: 6px 6px 4px;
 }
 
-/* Cards container */
+/* Área de cards com scroll vertical */
 .column-cards {
+  flex: 1 1 0;
+  min-height: 0; /* fundamental para scroll em flex-child */
+  overflow-y: auto; /* <-- aqui o scroll */
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -467,7 +507,7 @@ function saveDetails() {
 
 /* Cards */
 .kanban-card {
-  background: #f8f8f8;
+  background: #ffffff;
 }
 .kanban-card :deep(.v-card-text) {
   padding-left: 12px !important;
@@ -481,7 +521,7 @@ function saveDetails() {
   font-size: 12px;
   border: 1px dashed rgba(0, 0, 0, 0.25);
   border-radius: 8px;
-  background: #efefef;
+  background: #ffffff;
 }
 
 /* Dialog */
