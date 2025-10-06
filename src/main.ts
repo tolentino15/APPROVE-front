@@ -3,13 +3,16 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 
-// Vuetify imports
 import { createVuetify } from 'vuetify'
 import 'vuetify/styles'
 import { aliases, mdi } from 'vuetify/iconsets/mdi'
 import '@mdi/font/css/materialdesignicons.css'
+import { VCalendar } from 'vuetify/labs/VCalendar'
 
 const vuetify = createVuetify({
+  components: {
+    VCalendar,
+  },
   icons: {
     defaultSet: 'mdi',
     aliases,
