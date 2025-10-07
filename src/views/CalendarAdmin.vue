@@ -2,6 +2,7 @@
   <v-container fluid class="pa-0">
     <v-sheet class="page-surface">
       <v-container class="py-6">
+        <!-- Toolbar -->
         <v-toolbar flat class="mb-3">
           <v-btn class="me-4" color="grey-darken-2" variant="outlined" @click="setToday">
             Hoje
@@ -31,6 +32,7 @@
             hide-details
             style="max-width: 220px"
             class="mr-3"
+            @update:model-value="reloadCurrentRange"
           />
 
           <v-menu location="bottom end">
@@ -41,22 +43,23 @@
               </v-btn>
             </template>
             <v-list>
-              <v-list-item @click="type = 'day'">
-                <v-list-item-title>Dia</v-list-item-title>
-              </v-list-item>
-              <v-list-item @click="type = 'week'">
-                <v-list-item-title>Semana</v-list-item-title>
-              </v-list-item>
-              <v-list-item @click="type = 'month'">
-                <v-list-item-title>Mes</v-list-item-title>
-              </v-list-item>
-              <v-list-item @click="type = '4day'">
-                <v-list-item-title>4 dias</v-list-item-title>
-              </v-list-item>
+              <v-list-item @click="setView('day')"
+                ><v-list-item-title>Dia</v-list-item-title></v-list-item
+              >
+              <v-list-item @click="setView('week')"
+                ><v-list-item-title>Semana</v-list-item-title></v-list-item
+              >
+              <v-list-item @click="setView('month')"
+                ><v-list-item-title>Mês</v-list-item-title></v-list-item
+              >
+              <v-list-item @click="setView('4day')"
+                ><v-list-item-title>4 dias</v-list-item-title></v-list-item
+              >
             </v-list>
           </v-menu>
         </v-toolbar>
 
+        <!-- Legenda de clientes -->
         <div class="d-flex align-center flex-wrap mb-2" style="gap: 12px">
           <div v-for="client in clients" :key="client.id" class="legend-chip">
             <span class="dot" :style="{ background: client.color }"></span>
@@ -64,23 +67,32 @@
           </div>
         </div>
 
+        <!-- Erro -->
+        <v-alert v-if="loadError" type="error" variant="tonal" class="mb-3" density="comfortable">
+          {{ loadError }}
+        </v-alert>
+
+        <!-- Calendário -->
         <v-sheet height="720" class="rounded-lg overflow-hidden">
+          <v-progress-linear v-if="loading" indeterminate color="primary" />
           <v-calendar
             ref="calendar"
             v-model="focus"
-            :events="filteredEvents"
             :type="type"
+            :events="filteredEvents"
+            :event-color="getEventColor"
             color="primary"
             @change="updateRange"
-            @click:date="viewDay"
             @click:event="showEvent"
+            @click:date="viewDay"
             @click:more="viewDay"
           />
 
+          <!-- Popover do evento -->
           <v-menu
             v-model="selectedOpen"
-            :activator="selectedElement"
             :close-on-content-click="false"
+            :activator="selectedElement || undefined"
             location="end"
           >
             <v-card min-width="360" color="grey-lighten-4" flat>
@@ -89,9 +101,7 @@
                   {{ selectedEvent?.name ?? '' }}
                 </v-toolbar-title>
                 <v-spacer />
-                <v-btn icon>
-                  <v-icon>mdi-dots-vertical</v-icon>
-                </v-btn>
+                <v-btn icon><v-icon>mdi-dots-vertical</v-icon></v-btn>
               </v-toolbar>
               <v-card-text>
                 <div class="mb-2 text-medium-emphasis">{{ selectedEventClient }}</div>
@@ -111,9 +121,19 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
-import type { VCalendar } from 'vuetify/labs/VCalendar'
+import { computed, onMounted, ref, type Ref } from 'vue'
+import { fetchCalendarEvents } from '@/api/calendar'
+import { mapDTOToCalEvent } from '@/mappers/calendar'
 
+/* ---------- Tipo mínimo exposto pelo v-calendar que usamos ---------- */
+type CalendarExpose = {
+  prev: () => void
+  next: () => void
+  checkChange: () => void
+  title?: string
+}
+
+/* ---------- Domínio ---------- */
 type Client = { id: string; name: string; color: string }
 const clients: Client[] = [
   { id: 'cliente-a', name: 'Cliente A', color: '#1e88e5' },
@@ -129,18 +149,26 @@ const typeToLabel: Record<string, string> = {
   '4day': '4 dias',
 }
 
-const calendar = ref<InstanceType<typeof VCalendar> | null>(null)
+/* ref do calendário (sem importar tipo interno do Vuetify) */
+const calendar = ref<CalendarExpose | null>(null)
+
+/* estado do calendário */
 const focus = ref<string>(new Date().toISOString().slice(0, 10))
 const type = ref<'month' | 'week' | 'day' | '4day'>('month')
+function setView(v: 'month' | 'week' | 'day' | '4day') {
+  type.value = v
+  reloadCurrentRange()
+}
 
+/* filtro por cliente */
 const ALL_VALUE = 'all'
 const selectedClient = ref<string>(ALL_VALUE)
-
 const clientOptions = computed(() => [
   { label: 'Todos', value: ALL_VALUE },
   ...clients.map((client) => ({ label: client.name, value: client.id })),
 ])
 
+/* eventos */
 type CalEvent = {
   name: string
   start: Date
@@ -154,65 +182,99 @@ type CalEvent = {
 const allEvents = ref<CalEvent[]>([])
 const filteredEvents = computed<CalEvent[]>(() => {
   const filter = selectedClient.value
-  if (filter === ALL_VALUE) {
-    return allEvents.value
-  }
-  return allEvents.value.filter((event) => event.client === filter)
+  return filter === ALL_VALUE
+    ? allEvents.value
+    : allEvents.value.filter((event) => event.client === filter)
 })
 
-const clientMap = computed<Record<string, Client>>(() => {
-  return clients.reduce(
-    (map, client) => {
-      map[client.id] = client
-      return map
-    },
-    {} as Record<string, Client>,
-  )
-})
+/* mapa de clientes (id->client) */
+const clientMap = computed<Record<string, Client>>(() =>
+  clients.reduce((map, c) => ((map[c.id] = c), map), {} as Record<string, Client>),
+)
 
-const selectedEvent = ref<CalEvent | null>(null)
-const selectedElement = ref<HTMLElement | null>(null)
+/* popover do evento */
+const selectedEvent: Ref<CalEvent | null> = ref(null)
+const selectedElement: Ref<HTMLElement | null> = ref(null)
 const selectedOpen = ref(false)
-
 const selectedEventClient = computed(() => {
-  const event = selectedEvent.value
-  if (!event) return ''
-  return clientMap.value[event.client]?.name ?? event.client
+  const ev = selectedEvent.value
+  return ev ? (clientMap.value[ev.client]?.name ?? ev.client) : ''
 })
 
+/* loading/erro + proteção contra race condition */
+const loading = ref(false)
+const loadError = ref<string | null>(null)
+let lastRequestId = 0
+
+/* lifecycle */
 onMounted(() => {
   calendar.value?.checkChange()
 })
 
+/* ações da toolbar */
 function setToday() {
   focus.value = ''
 }
-
 function prev() {
   calendar.value?.prev()
 }
-
 function next() {
   calendar.value?.next()
 }
+function reloadCurrentRange() {
+  // força o v-calendar disparar @change novamente
+  calendar.value?.checkChange()
+}
 
-function viewDay(_nativeEvt: unknown, { date }: { date: string }) {
+/* clique na data -> muda para dia */
+function viewDay(_nativeEvt: Event, { date }: { date: string }) {
   focus.value = date
   type.value = 'day'
 }
 
-function showEvent(nativeEvent: MouseEvent, { event }: { event: CalEvent }) {
+/* cor do evento (se estiver usando :event-color) */
+function getEventColor(event: unknown): string {
+  const e = event as { color?: string } | null
+  return e?.color ?? 'primary'
+}
+
+/* ---- @click:event: handler com type-guard (sem any) ---- */
+type VCalClickPayload = { event: CalEvent; nativeEvent: MouseEvent }
+
+function isVCalClickPayload(p: unknown): p is VCalClickPayload {
+  if (p == null || typeof p !== 'object') return false
+
+  // p é um objeto genérico com chaves desconhecidas
+  const obj = p as Record<string, unknown>
+
+  // event precisa ser um objeto (CalEvent)
+  const ev = obj.event
+  const isEventObj = typeof ev === 'object' && ev !== null
+
+  // nativeEvent precisa ser um MouseEvent (checa estrutura mínima)
+  const ne = obj.nativeEvent
+  const isMouseEvt =
+    typeof ne === 'object' &&
+    ne !== null &&
+    'stopPropagation' in (ne as Record<string, unknown>) &&
+    typeof (ne as MouseEvent).stopPropagation === 'function'
+
+  return isEventObj && isMouseEvt
+}
+
+function showEvent(_e: Event, payload: unknown) {
+  if (!isVCalClickPayload(payload)) return
+  const { event, nativeEvent } = payload
+
   const open = () => {
     selectedEvent.value = event
     selectedElement.value = nativeEvent.target as HTMLElement
-    requestAnimationFrame(() => {
-      selectedOpen.value = true
-    })
+    requestAnimationFrame(() => (selectedOpen.value = true))
   }
 
   if (selectedOpen.value) {
     selectedOpen.value = false
-    requestAnimationFrame(() => open())
+    requestAnimationFrame(open)
   } else {
     open()
   }
@@ -220,44 +282,66 @@ function showEvent(nativeEvent: MouseEvent, { event }: { event: CalEvent }) {
   nativeEvent.stopPropagation()
 }
 
-function updateRange({ start, end }: { start: { date: string }; end: { date: string } }) {
-  const min = new Date(`${start.date}T00:00:00`)
-  const max = new Date(`${end.date}T23:59:59`)
+/* ====== Carga de eventos (pronto para backend) ====== */
+const updateRange = async ({ start, end }: { start: { date: string }; end: { date: string } }) => {
+  const requestId = ++lastRequestId
+  loading.value = true
+  loadError.value = null
 
-  const dayCount = Math.max(1, Math.round((max.getTime() - min.getTime()) / 86400000))
-  const basePerClient = Math.max(3, Math.floor(dayCount / 3))
+  try {
+    const dtos = await fetchCalendarEvents({
+      start: start.date,
+      end: end.date,
+      clientId: selectedClient.value !== ALL_VALUE ? selectedClient.value : undefined,
+      view: type.value,
+    })
 
-  const generated: CalEvent[] = []
+    if (requestId !== lastRequestId) return // descarta resposta antiga
 
-  for (const client of clients) {
-    const eventCount = basePerClient + rnd(0, 4)
+    const mapped = dtos.map((dto) =>
+      mapDTOToCalEvent(
+        dto,
+        Object.fromEntries(clients.map((c) => [c.id, { color: c.color, name: c.name }])),
+      ),
+    )
 
-    for (let index = 0; index < eventCount; index += 1) {
-      const allDay = rnd(0, 3) === 0
-      const firstTs = rnd(min.getTime(), max.getTime())
-      const startDate = new Date(firstTs - (firstTs % (15 * 60 * 1000)))
-      const durationSlots = allDay ? rnd(8, 32) : rnd(2, 8)
-      const endDate = new Date(startDate.getTime() + durationSlots * 15 * 60 * 1000)
-
-      generated.push({
-        name: `Job - ${client.name}`,
-        start: startDate,
-        end: endDate,
-        color: client.color,
-        timed: !allDay,
-        client: client.id,
-        details: `${client.name} - conteudo/peca agendada`,
-      })
+    mapped.sort((a, b) => a.start.getTime() - b.start.getTime())
+    allEvents.value = mapped
+  } catch (err: unknown) {
+    if (requestId !== lastRequestId) return
+    loadError.value = err instanceof Error ? err.message : 'Erro ao carregar eventos'
+    // --- MOCK opcional (descomente enquanto o backend não existir) ---
+    /*
+    const min = new Date(`${start.date}T00:00:00`)
+    const max = new Date(`${end.date}T23:59:59`)
+    const dayCount = Math.max(1, Math.round((max.getTime() - min.getTime()) / 86400000))
+    const basePerClient = Math.max(3, Math.floor(dayCount / 3))
+    const generated: CalEvent[] = []
+    for (const client of clients) {
+      const eventCount = basePerClient + Math.floor(Math.random() * 5)
+      for (let i = 0; i < eventCount; i++) {
+        const allDay = Math.random() < 0.25
+        const firstTs = min.getTime() + Math.floor(Math.random() * (max.getTime() - min.getTime()))
+        const startDate = new Date(firstTs - (firstTs % (15 * 60 * 1000)))
+        const durationSlots = allDay ? 16 : Math.floor(Math.random() * 6) + 2
+        const endDate = new Date(startDate.getTime() + durationSlots * 15 * 60 * 1000)
+        generated.push({
+          name: `Job - ${client.name}`,
+          start: startDate,
+          end: endDate,
+          color: client.color,
+          timed: !allDay,
+          client: client.id,
+          details: `${client.name} - conteúdo/peça agendada`,
+        })
+      }
     }
+    generated.sort((a, b) => a.start.getTime() - b.start.getTime())
+    allEvents.value = generated
+    */
+  } finally {
+    if (requestId === lastRequestId) loading.value = false
   }
-
-  generated.sort((a, b) => a.start.getTime() - b.start.getTime())
-
-  allEvents.value = generated
-}
-
-function rnd(a: number, b: number) {
-  return Math.floor((b - a + 1) * Math.random()) + a
 }
 </script>
 
