@@ -1,41 +1,63 @@
+// src/router/index.ts
 import { createRouter, createWebHistory } from 'vue-router'
+import type { RouteRecordRaw } from 'vue-router'
+import { getToken, getRole } from '@/auth'
+import type { UserRole } from '@/auth'
+
+const routes: RouteRecordRaw[] = [
+  {
+    path: '/login',
+    name: 'Login',
+    component: () => import('@/views/LoginScreen.vue'),
+    meta: { hideChrome: true },
+  },
+  {
+    path: '/',
+    name: 'HomeAdmin',
+    component: () => import('@/views/HomeAdmin.vue'),
+    meta: { requiresAuth: true, roles: ['admin'] as UserRole[] },
+  },
+  {
+    path: '/board',
+    name: 'BoardAdmin',
+    component: () => import('@/views/BoardAdmin.vue'),
+    meta: { requiresAuth: true, roles: ['client'] as UserRole[] },
+  },
+  {
+    path: '/calendar',
+    name: 'CalendarAdmin',
+    component: () => import('@/views/CalendarAdmin.vue'),
+    meta: { requiresAuth: true, roles: ['admin'] as UserRole[] },
+  },
+  { path: '/:pathMatch(.*)*', redirect: '/login' },
+]
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
-  routes: [
-    { path: '/', name: 'HomeAdmin', component: () => import('../views/HomeAdmin.vue') },
-    { path: '/login', name: 'Login', component: () => import('../views/LoginScreen.vue') },
-    {
-      path: '/home-cliente',
-      name: 'HomeCliente',
-      component: () => import('../views/HomeCliente.vue'),
-    },
-    {
-      path: '/board-cliente',
-      name: 'BoardCliente',
-      component: () => import('../views/BoardCliente.vue'),
-    },
-    {
-      path: '/cadastro-cliente',
-      name: 'CadastroCliente',
-      component: () => import('../views/CadastroCliente.vue'),
-    },
-    {
-      path: '/cadastro-job',
-      name: 'CadastroJob',
-      component: () => import('../views/CadastroJob.vue'),
-    },
-    {
-      path: '/board-admin',
-      name: 'BoardAdmin',
-      component: () => import('../views/BoardAdmin.vue'),
-    },
-    {
-      path: '/calendario',
-      name: 'CalendarAdmin',
-      component: () => import('../views/CalendarAdmin.vue'),
-    },
-  ],
+  history: createWebHistory(),
+  routes,
+})
+
+function homeFor(role: UserRole) {
+  return role === 'admin' ? { name: 'HomeAdmin' } : { name: 'BoardAdmin' }
+}
+
+router.beforeEach((to) => {
+  const token = getToken()
+  const role = getRole()
+
+  if (!to.meta?.requiresAuth) {
+    if (to.name === 'Login' && token && role) return homeFor(role)
+    return true
+  }
+
+  if (!token || !role) {
+    return { name: 'Login', query: { redirect: to.fullPath } }
+  }
+
+  const allowed = to.meta.roles as UserRole[] | undefined
+  if (allowed && !allowed.includes(role)) return homeFor(role)
+
+  return true
 })
 
 export default router

@@ -1,7 +1,14 @@
 <template>
   <v-app>
     <!-- TOP BAR -->
-    <v-app-bar height="80" flat color="#2a2a2a" density="comfortable" class="text-white">
+    <v-app-bar
+      v-if="showChrome"
+      height="80"
+      flat
+      color="#2a2a2a"
+      density="comfortable"
+      class="text-white"
+    >
       <template #prepend>
         <div class="d-flex align-center">
           <v-img src="/Logo.png" alt="Logo" width="180" height="44" contain eager class="mr-2" />
@@ -19,6 +26,7 @@
 
     <!-- NAV DRAWER -->
     <v-navigation-drawer
+      v-if="showChrome"
       v-model="drawer"
       permanent
       rail
@@ -34,15 +42,12 @@
 
       <v-divider class="my-2"></v-divider>
 
-      <!-- Ativação automática via Vue Router -->
       <v-list ref="navListRef" density="compact" nav class="nav-list">
-        <!-- fundo animado -->
         <div
           class="nav-highlight"
           :style="{ transform: `translateY(${hlY}px)`, height: `${hlH}px` }"
         />
 
-        <!-- wrapper para capturar a ref de cada item -->
         <div
           v-for="(item, i) in navItems"
           :key="item.title"
@@ -75,7 +80,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, ref as vueRef, nextTick, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 const route = useRoute()
@@ -83,6 +88,9 @@ const router = useRouter()
 
 const drawer = ref(true)
 const avatarUrl = 'https://avatars.githubusercontent.com/u/9919?s=64&v=4'
+
+// 👇 Esconde TopBar/NavDrawer quando a rota tem meta.hideChrome = true (ex.: Login)
+const showChrome = computed(() => route.meta?.hideChrome !== true)
 
 type NavItem = { title: string; icon: string; to: { name: string } }
 
@@ -94,18 +102,14 @@ const navItems: NavItem[] = [
   { title: 'Jobs', icon: 'mdi-file-multiple', to: { name: 'CadastroJob' } },
 ]
 
-// se preferir por path, troque para: route.path === '/minha-rota'
 function isActive(item: NavItem) {
   return route.name === item.to.name
 }
-
 function go(to: { name: string }) {
   router.push(to)
 }
 
 // === Highlight animado do item ativo ===
-import { ref as vueRef, nextTick, watch, onMounted, onBeforeUnmount } from 'vue'
-
 const navListRef = vueRef<HTMLElement | null>(null)
 const itemRefs = vueRef<Array<HTMLDivElement | null>>([])
 const hlY = vueRef(0)
@@ -133,13 +137,10 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-/* container preparado para highlight absoluto */
 .nav-list {
   position: relative;
   padding: 8px 6px;
 }
-
-/* “pill” que desliza para o item ativo */
 .nav-highlight {
   position: absolute;
   left: 6px;
@@ -152,8 +153,6 @@ onBeforeUnmount(() => {
     transform 0.22s cubic-bezier(0.2, 0, 0, 1),
     height 0.18s ease;
 }
-
-/* garantir que os itens fiquem acima do pill */
 .nav-item-wrap :deep(.v-list-item) {
   position: relative;
   z-index: 1;
