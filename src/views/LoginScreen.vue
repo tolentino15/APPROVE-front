@@ -105,6 +105,18 @@ const rules = {
  * Troque pelo seu fetch/axios para a API.
  * Retorne o papel do usuário (admin/cliente) e o token.
  */
+
+//  // depois do login bem-sucedido:
+// localStorage.setItem('token', data.token)
+// localStorage.setItem('role', data.role) // 'admin' | 'client'
+
+// const redirect = (route.query.redirect as string) || null
+// if (redirect) {
+//   router.replace(redirect)
+// } else {
+//   router.replace(data.role === 'client' ? { name: 'BoardAdmin' } : { name: 'HomeAdmin' })
+// }
+
 async function fakeLoginApi(
   email: string,
   password: string,
