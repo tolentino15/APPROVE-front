@@ -21,6 +21,15 @@ export function setRole(role: UserRole) {
   localStorage.setItem('role', role)
 }
 
+export function clearRole() {
+  localStorage.removeItem('role')
+}
+
+export function clearAuth() {
+  localStorage.removeItem('token')
+  localStorage.removeItem('role')
+}
+
 // Caso seu backend mande JWT com claim "role", você pode decodificar:
 // (deixe para quando integrar de verdade)
 // export function roleFromJwt(token: string): UserRole | null { ... }

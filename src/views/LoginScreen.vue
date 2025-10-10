@@ -75,11 +75,12 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import type { VForm } from 'vuetify/components'
 
 /** Router para redirecionar após login */
 const router = useRouter()
+const route = useRoute()
 
 /** Estado do formulário */
 const formRef = ref<VForm | null>(null)
@@ -142,6 +143,20 @@ async function onSubmit() {
 
   loading.value = true
   try {
+    // Mock/real login (controlado por VITE_MOCK_AUTH)
+    const useMock = String(import.meta.env.VITE_MOCK_AUTH).toLowerCase() === 'true'
+    if (useMock) {
+      const { role, token } = await fakeLoginApi(form.value.email, form.value.password)
+      localStorage.setItem('token', token)
+      localStorage.setItem('role', role)
+      const redirect = (route.query.redirect as string) || null
+      if (redirect) {
+        router.replace(redirect)
+      } else {
+        router.push(role === 'admin' ? { name: 'HomeAdmin' } : { name: 'BoardAdmin' })
+      }
+      return
+    }
     // >>> TROQUE POR CHAMADA REAL AO BACKEND <<<
     const { role, token } = await fakeLoginApi(form.value.email, form.value.password)
 

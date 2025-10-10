@@ -1,17 +1,35 @@
 <template>
   <v-container fluid class="pa-0">
     <v-sheet class="page-surface">
-      <v-container class="py-6">
+      <v-container fluid class="py-6 px-6 calendar-container">
+        <!-- Título -->
+        <div class="d-flex align-center justify-space-between mb-4">
+          <div class="board-title chip-blue">Calendário</div>
+        </div>
+
         <!-- Toolbar -->
-        <v-toolbar flat class="mb-3">
-          <v-btn class="me-4" color="grey-darken-2" variant="outlined" @click="setToday">
+        <v-toolbar flat class="mb-4 calendar-toolbar" density="comfortable">
+          <v-btn
+            class="me-4 text-none font-weight-bold toolbar-btn-primary"
+            color="#2d8cff"
+            variant="flat"
+            rounded="lg"
+            @click="setToday"
+          >
             Hoje
           </v-btn>
 
-          <v-btn color="grey-darken-2" size="small" variant="text" icon @click="prev">
+          <v-btn
+            color="#2d8cff"
+            border="2d8cff 1px solid"
+            size="small"
+            variant="text"
+            icon
+            @click="prev"
+          >
             <v-icon size="small">mdi-chevron-left</v-icon>
           </v-btn>
-          <v-btn color="grey-darken-2" size="small" variant="text" icon @click="next">
+          <v-btn color="#2d8cff" size="small" variant="text" icon @click="next">
             <v-icon size="small">mdi-chevron-right</v-icon>
           </v-btn>
 
@@ -21,23 +39,37 @@
 
           <v-spacer />
 
-          <v-select
-            v-model="selectedClient"
-            :items="clientOptions"
-            item-title="label"
-            item-value="value"
-            label="Cliente"
-            density="comfortable"
-            variant="outlined"
-            hide-details
-            style="max-width: 220px"
-            class="mr-3"
-            @update:model-value="reloadCurrentRange"
-          />
+          <v-menu v-if="isAdmin" location="bottom end">
+            <template #activator="{ props }">
+              <v-btn color="#2D8CFF" variant="outlined" class="text-none mr-3" v-bind="props">
+                <span>{{ selectedClientLabel }}</span>
+                <v-icon end>mdi-menu-down</v-icon>
+              </v-btn>
+            </template>
+            <v-list>
+              <v-list-item :active="selectedClient === ALL_VALUE" @click="setClient(ALL_VALUE)">
+                <v-list-item-title>Todos</v-list-item-title>
+              </v-list-item>
+              <v-list-item
+                v-for="opt in clientOptionsNoAll"
+                :key="opt.value"
+                :active="selectedClient === opt.value"
+                @click="setClient(opt.value)"
+              >
+                <v-list-item-title>{{ opt.label }}</v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </v-menu>
 
           <v-menu location="bottom end">
             <template #activator="{ props }">
-              <v-btn color="grey-darken-2" variant="outlined" v-bind="props">
+              <v-btn
+                color="#2d8cff"
+                variant="flat"
+                rounded="lg"
+                class="text-none font-weight-bold toolbar-btn-primary"
+                v-bind="props"
+              >
                 <span>{{ typeToLabel[type] }}</span>
                 <v-icon end>mdi-menu-down</v-icon>
               </v-btn>
@@ -58,6 +90,9 @@
             </v-list>
           </v-menu>
         </v-toolbar>
+        <v-progress-linear v-if="loading" indeterminate color="#2D8CFF" class="mb-3" height="3" />
+
+        <v-progress-linear v-if="loading" indeterminate color="#2f7cf6" class="mb-3" height="3" />
 
         <!-- Legenda de clientes -->
         <div class="d-flex align-center flex-wrap mb-2" style="gap: 12px">
@@ -73,9 +108,9 @@
         </v-alert>
 
         <!-- Calendário -->
-        <v-sheet height="720" class="rounded-lg overflow-hidden">
-          <v-progress-linear v-if="loading" indeterminate color="primary" />
+        <v-sheet class="calendar-body rounded-lg overflow-hidden">
           <v-calendar
+            class="calendar-root"
             ref="calendar"
             v-model="focus"
             :type="type"
@@ -124,6 +159,8 @@
 import { computed, onMounted, ref, type Ref } from 'vue'
 import { fetchCalendarEvents } from '@/api/calendar'
 import { mapDTOToCalEvent } from '@/mappers/calendar'
+import type { CalEvent } from '@/mappers/calendar'
+import { getRole } from '@/auth'
 
 /* ---------- Tipo mínimo exposto pelo v-calendar que usamos ---------- */
 type CalendarExpose = {
@@ -143,7 +180,7 @@ const clients: Client[] = [
 ]
 
 const typeToLabel: Record<string, string> = {
-  month: 'Mes',
+  month: 'Mês',
   week: 'Semana',
   day: 'Dia',
   '4day': '4 dias',
@@ -167,18 +204,19 @@ const clientOptions = computed(() => [
   { label: 'Todos', value: ALL_VALUE },
   ...clients.map((client) => ({ label: client.name, value: client.id })),
 ])
+const clientOptionsNoAll = computed(() => clients.map((c) => ({ label: c.name, value: c.id })))
 
-/* eventos */
-type CalEvent = {
-  name: string
-  start: Date
-  end: Date
-  color: string
-  timed: boolean
-  client: string
-  details?: string
+const isAdmin = computed(() => getRole() === 'admin')
+const selectedClientLabel = computed(() => {
+  const opt = clientOptions.value.find((o) => o.value === selectedClient.value)
+  return opt?.label ?? 'Cliente'
+})
+function setClient(val: string) {
+  selectedClient.value = val
+  reloadCurrentRange()
 }
 
+/* eventos */
 const allEvents = ref<CalEvent[]>([])
 const filteredEvents = computed<CalEvent[]>(() => {
   const filter = selectedClient.value
@@ -289,6 +327,37 @@ const updateRange = async ({ start, end }: { start: { date: string }; end: { dat
   loadError.value = null
 
   try {
+    const useMock = String(import.meta.env.VITE_MOCK_CALENDAR).toLowerCase() === 'true'
+    if (useMock) {
+      const min = new Date(`${start.date}T00:00:00`)
+      const max = new Date(`${end.date}T23:59:59`)
+      const dayCount = Math.max(1, Math.round((max.getTime() - min.getTime()) / 86400000))
+      const basePerClient = Math.max(3, Math.floor(dayCount / 3))
+      const generated: CalEvent[] = []
+      for (const client of clients) {
+        const eventCount = basePerClient + Math.floor(Math.random() * 5)
+        for (let i = 0; i < eventCount; i++) {
+          const allDay = Math.random() < 0.25
+          const firstTs =
+            min.getTime() + Math.floor(Math.random() * (max.getTime() - min.getTime()))
+          const startDate = new Date(firstTs - (firstTs % (15 * 60 * 1000)))
+          const durationSlots = allDay ? 16 : Math.floor(Math.random() * 6) + 2
+          const endDate = new Date(startDate.getTime() + durationSlots * 15 * 60 * 1000)
+          generated.push({
+            name: `Job - ${client.name}`,
+            start: startDate,
+            end: endDate,
+            color: client.color,
+            timed: !allDay,
+            client: client.id,
+            details: `${client.name} - conteúdo agendado`,
+          })
+        }
+      }
+      generated.sort((a, b) => a.start.getTime() - b.start.getTime())
+      allEvents.value = generated
+      return
+    }
     const dtos = await fetchCalendarEvents({
       start: start.date,
       end: end.date,
@@ -310,6 +379,36 @@ const updateRange = async ({ start, end }: { start: { date: string }; end: { dat
   } catch (err: unknown) {
     if (requestId !== lastRequestId) return
     loadError.value = err instanceof Error ? err.message : 'Erro ao carregar eventos'
+    // Fallback: gera eventos simulados para não quebrar a tela quando a API falhar
+    try {
+      const min = new Date(`${start.date}T00:00:00`)
+      const max = new Date(`${end.date}T23:59:59`)
+      const dayCount = Math.max(1, Math.round((max.getTime() - min.getTime()) / 86400000))
+      const basePerClient = Math.max(3, Math.floor(dayCount / 3))
+      const generated: CalEvent[] = []
+      for (const client of clients) {
+        const eventCount = basePerClient + Math.floor(Math.random() * 5)
+        for (let i = 0; i < eventCount; i++) {
+          const allDay = Math.random() < 0.25
+          const firstTs =
+            min.getTime() + Math.floor(Math.random() * (max.getTime() - min.getTime()))
+          const startDate = new Date(firstTs - (firstTs % (15 * 60 * 1000)))
+          const durationSlots = allDay ? 16 : Math.floor(Math.random() * 6) + 2
+          const endDate = new Date(startDate.getTime() + durationSlots * 15 * 60 * 1000)
+          generated.push({
+            name: `Job - ${client.name}`,
+            start: startDate,
+            end: endDate,
+            color: client.color,
+            timed: !allDay,
+            client: client.id,
+            details: `${client.name} - conteúdo agendado`,
+          })
+        }
+      }
+      generated.sort((a, b) => a.start.getTime() - b.start.getTime())
+      allEvents.value = generated
+    } catch {}
     // --- MOCK opcional (descomente enquanto o backend não existir) ---
     /*
     const min = new Date(`${start.date}T00:00:00`)
@@ -346,6 +445,75 @@ const updateRange = async ({ start, end }: { start: { date: string }; end: { dat
 </script>
 
 <style scoped>
+.calendar-container {
+  min-height: calc(100vh - 70px);
+}
+
+.calendar-toolbar {
+  background: #ffffff;
+  border: #2d8cff 1px solid;
+  border-radius: 10px;
+}
+.toolbar-btn-primary {
+  box-shadow: 0 2px 10px rgba(45, 140, 255, 0.25);
+  color: #fffffffb !important;
+}
+.calendar-select :deep(.v-field__outline) {
+  --v-field-border-color: rgba(45, 140, 255, 0.55);
+}
+.calendar-select :deep(.v-field__input),
+.calendar-toolbar :deep(.v-toolbar-title) {
+  color: #0f2136;
+}
+.calendar-toolbar :deep(.v-btn .v-icon) {
+  color: #0f2136;
+}
+
+.calendar-center {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+.calendar-box {
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  height: clamp(520px, calc(100vh - 240px), 780px);
+}
+.calendar-box :deep(.v-calendar) {
+  height: 100%;
+}
+
+.calendar-container {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 80px);
+}
+.calendar-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border: #2d8cff 1px solid;
+}
+
+.calendar-root {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  padding: 5px;
+}
+
+.board-title {
+  display: inline-block;
+  font-weight: 900;
+  font-size: 24px;
+  color: #fff;
+  padding: 6px 14px;
+  border-radius: 12px;
+}
+.chip-blue {
+  background: #2f7cf6;
+}
 .page-surface {
   background: #d9d9d9;
   min-height: calc(100vh - 80px);
@@ -356,8 +524,8 @@ const updateRange = async ({ start, end }: { start: { date: string }; end: { dat
   align-items: center;
   gap: 8px;
   padding: 4px 8px;
-  background: #fff;
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  background: #ffffff;
+  border: #2d8cff 1px solid;
   border-radius: 999px;
 }
 
@@ -365,6 +533,12 @@ const updateRange = async ({ start, end }: { start: { date: string }; end: { dat
   width: 10px;
   height: 10px;
   border-radius: 50%;
+}
+
+.topo {
+  background: #2d8cff;
+  border-radius: 8px;
+  padding: 8px;
 }
 
 .v-sheet.rounded-lg {

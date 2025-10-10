@@ -43,7 +43,7 @@
         />
 
         <div
-          v-for="(item, i) in navItems"
+          v-for="(item, i) in menuItems"
           :key="item.title"
           class="nav-item-wrap"
           :ref="(el) => (itemRefs[i] = el as HTMLDivElement | null)"
@@ -70,8 +70,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref, nextTick, watch, onMounted, onBeforeUnmount, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { getRole, type UserRole } from '@/auth'
 
 const route = useRoute()
 const router = useRouter()
@@ -89,6 +90,18 @@ const navItems: NavItem[] = [
   { title: 'Jobs', icon: 'mdi-file-multiple', to: { name: 'CadastroJob' } },
 ]
 
+// itens visíveis por papel (cliente vê somente Dashboard e Quadro)
+const menuItems = computed<NavItem[]>(() => {
+  const role = getRole() as UserRole | null
+  if (role === 'client') {
+    return [
+      { title: 'Quadro', icon: 'mdi-clipboard-text-outline', to: { name: 'BoardAdmin' } },
+      { title: 'Calendário', icon: 'mdi-calendar-month', to: { name: 'CalendarAdmin' } },
+    ]
+  }
+  return navItems
+})
+
 function isActive(item: NavItem) {
   return route.name === item.to.name
 }
@@ -104,7 +117,7 @@ const hlH = ref(0)
 
 function updateHighlight() {
   nextTick(() => {
-    const idx = navItems.findIndex(isActive)
+    const idx = menuItems.value.findIndex(isActive)
     const el = itemRefs.value[idx]
     const list = navListRef.value
     if (!el || !list) return
@@ -114,6 +127,10 @@ function updateHighlight() {
 }
 
 watch(() => route.name, updateHighlight, { immediate: true })
+watch(menuItems, () => {
+  itemRefs.value = []
+  updateHighlight()
+})
 onMounted(() => {
   updateHighlight()
   window.addEventListener('resize', updateHighlight)

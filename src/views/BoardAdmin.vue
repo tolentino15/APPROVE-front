@@ -6,6 +6,7 @@
         <div class="d-flex align-center justify-space-between mb-4">
           <div class="board-title chip-blue">Quadro</div>
           <v-btn
+            v-if="isAdmin"
             color="primary"
             prepend-icon="mdi-plus"
             class="text-none font-weight-bold rounded-lg"
@@ -125,22 +126,25 @@
           <!-- GRID DO DIALOG -->
           <div class="details-grid">
             <!-- ESQUERDA: Descrição + Preview -->
-            <div>
-              <v-text-field
+            <div class="comments-pane">
+              <div class="text-subtitle-1 font-weight-bold mt-4 mb-2">Post Preview</div>
+              <v-img
+                v-if="selectedCard?.image"
+                :src="selectedCard?.image"
+                contain
+                class="rounded-lg border-light mb-4 preview-img"
+                @click.stop="openImagePreview"
+              />
+              <v-textarea
                 v-model="selectedCardDraft.description"
                 variant="solo-filled"
                 density="comfortable"
                 flat
                 hide-details
                 label="Descrição / Legenda"
-              />
-
-              <div class="text-subtitle-1 font-weight-bold mt-4 mb-2">Post Preview</div>
-              <v-img
-                :src="selectedCard?.image"
-                height="300"
-                cover
-                class="rounded-lg border-light"
+                rows="5"
+                :auto-grow="false"
+                class="desc-textarea mt-2"
               />
             </div>
 
@@ -155,6 +159,7 @@
                 hide-details
                 placeholder="Escreva aqui"
                 auto-grow
+                rows="6"
                 class="mb-3"
               />
               <v-btn
@@ -179,65 +184,63 @@
                     </div>
                   </div>
                 </div>
+                <!-- STATUS -->
+                <div class="d-flex align-center justify-space-between status-row">
+                  <div class="text-h6 font-weight-bold">Status</div>
+                  <div class="d-flex" style="gap: 8px">
+                    <v-btn
+                      color="green"
+                      class="text-none"
+                      size="small"
+                      :variant="selectedCardDraft.status === 'approved' ? 'flat' : 'tonal'"
+                      @click="setStatus('approved')"
+                    >
+                      Aprovado
+                    </v-btn>
+
+                    <v-btn
+                      color="cyan-darken-1"
+                      class="text-none"
+                      size="small"
+                      :variant="selectedCardDraft.status === 'adjust' ? 'flat' : 'tonal'"
+                      @click="setStatus('adjust')"
+                    >
+                      Ajuste
+                    </v-btn>
+                  </div>
+                </div>
+
+                <!-- REDES base, no rodapé -->
+                <div class="d-flex align-center justify-center socials-bottom" style="gap: 20px">
+                  <v-btn
+                    icon
+                    variant="text"
+                    :class="{ 'social-active': selectedCardDraft.social.includes('instagram') }"
+                    @click="toggleSocial('instagram')"
+                    :aria-pressed="selectedCardDraft.social.includes('instagram')"
+                  >
+                    <v-icon size="24">mdi-instagram</v-icon>
+                  </v-btn>
+                  <v-btn
+                    icon
+                    variant="text"
+                    :class="{ 'social-active': selectedCardDraft.social.includes('facebook') }"
+                    @click="toggleSocial('facebook')"
+                    :aria-pressed="selectedCardDraft.social.includes('facebook')"
+                  >
+                    <v-icon size="24">mdi-facebook</v-icon>
+                  </v-btn>
+                  <v-btn
+                    icon
+                    variant="text"
+                    :class="{ 'social-active': selectedCardDraft.social.includes('whatsapp') }"
+                    @click="toggleSocial('whatsapp')"
+                    :aria-pressed="selectedCardDraft.social.includes('whatsapp')"
+                  >
+                    <v-icon size="24">mdi-whatsapp</v-icon>
+                  </v-btn>
+                </div>
               </div>
-            </div>
-          </div>
-          <v-divider class="my-4"></v-divider>
-
-          <!-- STATUS + REDES -->
-          <div class="d-flex flex-wrap align-center justify-space-between" style="gap: 12px">
-            <div class="text-h6 font-weight-bold">Status</div>
-
-            <div class="d-flex align-center" style="gap: 8px">
-              <v-btn
-                color="green"
-                class="text-none"
-                size="small"
-                :variant="selectedCardDraft.status === 'approved' ? 'flat' : 'tonal'"
-                @click="setStatus('approved')"
-              >
-                Aprovado
-              </v-btn>
-
-              <v-btn
-                color="cyan-darken-1"
-                class="text-none"
-                size="small"
-                :variant="selectedCardDraft.status === 'adjust' ? 'flat' : 'tonal'"
-                @click="setStatus('adjust')"
-              >
-                Ajuste
-              </v-btn>
-            </div>
-
-            <div class="d-flex align-center" style="gap: 10px">
-              <v-btn
-                icon
-                variant="text"
-                :class="{ 'social-active': selectedCardDraft.social.includes('instagram') }"
-                @click="toggleSocial('instagram')"
-                :aria-pressed="selectedCardDraft.social.includes('instagram')"
-              >
-                <v-icon size="24">mdi-instagram</v-icon>
-              </v-btn>
-              <v-btn
-                icon
-                variant="text"
-                :class="{ 'social-active': selectedCardDraft.social.includes('facebook') }"
-                @click="toggleSocial('facebook')"
-                :aria-pressed="selectedCardDraft.social.includes('facebook')"
-              >
-                <v-icon size="24">mdi-facebook</v-icon>
-              </v-btn>
-              <v-btn
-                icon
-                variant="text"
-                :class="{ 'social-active': selectedCardDraft.social.includes('whatsapp') }"
-                @click="toggleSocial('whatsapp')"
-                :aria-pressed="selectedCardDraft.social.includes('whatsapp')"
-              >
-                <v-icon size="24">mdi-whatsapp</v-icon>
-              </v-btn>
             </div>
           </div>
         </v-card-text>
@@ -250,16 +253,38 @@
       </v-card>
     </v-dialog>
     <!-- ======= /DIALOG ======= -->
+    <!-- ======= DIALOG IMAGEM (PREVIEW) ======= -->
+    <v-dialog v-model="imagePreviewOpen" max-width="90vw">
+      <v-card class="rounded-lg pa-0" color="#000" elevation="8">
+        <div class="d-flex align-center justify-end pa-2">
+          <v-btn icon variant="text" color="white" @click="imagePreviewOpen = false">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </div>
+        <v-card-text class="pa-0 d-flex align-center justify-center" style="background: #000">
+          <v-img v-if="selectedCard?.image" :src="selectedCard.image" contain class="full-img" />
+        </v-card-text>
+      </v-card>
+    </v-dialog>
+    <!-- ======= /DIALOG IMAGEM ======= -->
   </v-container>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { getRole } from '@/auth'
 
 const router = useRouter()
+const isAdmin = computed(() => getRole() === 'admin')
 function goToCadastroJob() {
   router.push({ name: 'CadastroJob' })
+}
+
+/* Preview de imagem no diálogo */
+const imagePreviewOpen = ref(false)
+function openImagePreview() {
+  imagePreviewOpen.value = true
 }
 
 /* Tipos */
@@ -436,7 +461,7 @@ function saveDetails() {
 /* ---------- layout do board ---------- */
 .page-surface {
   background: #d9d9d9;
-  height: calc(100vh - 80px);
+  height: calc(100vh - 50px);
   padding-top: 24px;
   padding-bottom: 24px;
 }
@@ -470,7 +495,7 @@ function saveDetails() {
 }
 
 .board-column {
-  background: #d6d6d6;
+  background: #ffffffe5;
   border: 2px solid rgba(0, 0, 0, 0.25);
   border-radius: 10px;
   padding: 8px 10px 12px;
@@ -569,11 +594,56 @@ function saveDetails() {
   border-radius: 8px;
 }
 
+/* imagem de preview se adapta mantendo proporção */
+.preview-img {
+  max-height: 360px;
+  background: #fff;
+  cursor: zoom-in;
+}
+.full-img {
+  max-height: 90vh;
+  width: 100%;
+}
+
+/* descrição abaixo da imagem */
+.desc-textarea :deep(textarea) {
+  max-height: 180px;
+  overflow-y: auto !important;
+}
+
+/* centralizar redes sociais no popup */
+.status-social-row {
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.status-left {
+  gap: 12px;
+}
+.status-buttons {
+  margin-left: auto;
+}
+.social-icons {
+  margin-left: auto;
+}
+.social-icons :deep(.v-btn.social-active) {
+  color: #2d8cff;
+}
+
 /* comments */
 .comments-list {
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+.comments-pane {
+  display: flex;
+  flex-direction: column;
+}
+.status-row {
+  margin-top: 8px;
+}
+.socials-bottom {
+  margin-top: 12px;
 }
 .comment-item {
   display: flex;

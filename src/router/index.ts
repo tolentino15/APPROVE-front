@@ -1,17 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router' // type-only (verbatimModuleSyntax)
+import { getToken, getRole as getCurrentRole, clearAuth } from '@/auth'
+import type { UserRole } from '@/auth'
 
-// ---- Tipos simples de papel/role ----
-export type UserRole = 'admin' | 'client'
-
-// ---- Helpers de auth (troque depois por Pinia/decodificar JWT) ----
-function getToken(): string | null {
-  return localStorage.getItem('token')
-}
-function getCurrentRole(): UserRole | null {
-  const r = localStorage.getItem('role')
-  return r === 'admin' || r === 'client' ? r : null
-}
 function isAuthenticated(): boolean {
   return !!getToken() && !!getCurrentRole()
 }
@@ -108,6 +99,13 @@ const router = createRouter({
 
 // ---- Guard global de autenticação e autorização ----
 router.beforeEach((to) => {
+  // Dev helper: use /login?resetAuth=1 (ou qualquer rota ?resetAuth=1)
+  const reset = String(to.query?.resetAuth ?? '').toLowerCase()
+  if (reset === '1' || reset === 'true') {
+    clearAuth()
+    return { name: 'Login' }
+  }
+
   const isPublic = to.meta?.public === true
   const needsAuth = to.meta?.requiresAuth === true
   const role = getCurrentRole()
